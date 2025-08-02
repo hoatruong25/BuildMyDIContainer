@@ -7,22 +7,43 @@ public class DiContainer
     {
         _serviceDescriptors = serviceDescriptors;
     }
-    public T GetService<T>() where T : class
+
+    private object GetService(Type serviceType)
     {
-        var descriptor = _serviceDescriptors.SingleOrDefault(x => x.ServiceType == typeof(T));
+        var descriptor = _serviceDescriptors.SingleOrDefault(x => x.ServiceType == serviceType);
 
         if (descriptor == null)
         {
-            throw new Exception($"Service of type {typeof(T).Name} isn't registered");
+            throw new Exception($"Service of type {serviceType.Name} isn't registered");
         }
 
-        var result = descriptor.Implementation as T;
-
-        if (result == null)
+        if (descriptor.Implementation != null)
         {
-            throw new Exception($"Implement of {typeof(T).Name} is null");       
+            return descriptor.Implementation;
         }
 
-        return result;
+        var actualType = descriptor.ImplementationType ?? descriptor.ServiceType;
+
+        if (actualType.IsAbstract || actualType.IsInterface)
+        {
+            throw new Exception($"Cannot instantiate abstract class or interface");       
+        }
+        
+        var constructorInfo = actualType.GetConstructors().First();
+        var constructorParams = constructorInfo.GetParameters().Select(x => GetService(x.ParameterType)).ToArray();
+
+        var implementation = Activator.CreateInstance(actualType, constructorParams);
+        
+        if (descriptor.Lifetime == ServiceLifetime.Singleton)
+        {
+            descriptor.Implementation = implementation;
+        }
+        
+        return implementation;
+    }
+
+    public T GetService<T>() where T : class
+    {
+        return (T)GetService(typeof(T));
     }
 }

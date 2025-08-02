@@ -1,4 +1,4 @@
-namespace BuildMyDIContainer;
+namespace BuildMyDIContainer.Impl;
 
 public class RandomGuidGenerator
 {

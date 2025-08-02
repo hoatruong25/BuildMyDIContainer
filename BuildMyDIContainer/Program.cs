@@ -1,4 +1,5 @@
 ﻿using BuildMyDIContainer.DependencyInjection;
+using BuildMyDIContainer.Impl;
 
 namespace BuildMyDIContainer;
 
@@ -8,15 +9,18 @@ class Program
     {
         var services = new DiServiceCollection();
 
-        services.RegisterSingleton(new RandomGuidGenerator());
-
+        RandomGuidGenerator? test = null;
+        
+        services.RegisterSingleton<IRandomGuidProvider, RandomGuidProvider>();
+        services.RegisterTransient<ISomeService, SomeServiceOne>();
+        
         var container = services.GenerateContainer();
 
-        var service1 = container.GetService<RandomGuidGenerator>();
-        var service2 = container.GetService<RandomGuidGenerator>();
+        var service1 = container.GetService<ISomeService>();
+        var service2 = container.GetService<ISomeService>();
         
-        Console.WriteLine(service1.Guild);
-        Console.WriteLine(service2.Guild);
+        service1.Print();
+        service2.Print();
     }
 }
 
